@@ -411,3 +411,34 @@ document.addEventListener('keydown', function(e) {
         alert("Acción no permitida por seguridad.");
     }
 });
+
+
+// =========================================================
+// --- LÓGICA VISUAL DEL CUPÓN DE DESCUENTO ---
+// =========================================================
+const applyCouponBtn = document.getElementById('applyCouponBtn');
+const couponMessage = document.getElementById('couponMessage');
+
+if (applyCouponBtn) {
+    applyCouponBtn.addEventListener('click', function() {
+        // Lee lo que el cliente escribió
+        const cuponInput = document.getElementById('discountCode').value.trim().toUpperCase();
+        
+        // Verifica si es el código secreto
+        if (cuponInput === "IMPACTANDOHOGARES") {
+            couponMessage.style.display = "block";
+            couponMessage.style.color = "#00a650"; // Verde confianza (estilo MercadoPago)
+            couponMessage.innerHTML = "✅ ¡Cupón aplicado exitosamente! Se te cobrará con tarifa especial de aliado en el siguiente paso.";
+            
+        } else if (cuponInput === "") {
+            couponMessage.style.display = "block";
+            couponMessage.style.color = "#f29d00"; // Naranja de advertencia
+            couponMessage.innerHTML = "⚠️ Escribe un código antes de presionar aplicar.";
+            
+        } else {
+            couponMessage.style.display = "block";
+            couponMessage.style.color = "#ff3333"; // Rojo de error
+            couponMessage.innerHTML = "❌ El código ingresado no es válido.";
+        }
+    });
+}
