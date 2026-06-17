@@ -165,7 +165,7 @@ document.getElementById('logoUpload').addEventListener('change', function(e) {
 });
 
 // =========================================================
-// --- LÓGICA DEL CARRITO ---
+// --- 6. LÓGICA DEL CARRITO (AHORA EXPORTA IMAGEN LIMPIA) ---
 // =========================================================
 const addToCartBtn = document.getElementById('addToCartBtn');
 if(addToCartBtn) {
@@ -173,10 +173,26 @@ if(addToCartBtn) {
         if(!canvas.backgroundImage) return;
         
         canvas.discardActiveObject();
+        
+        // 1. Ocultar marca de agua temporalmente
+        if (watermarkObject) watermarkObject.set('opacity', 0);
         canvas.renderAll();
-        const previewURL = canvas.toDataURL({ format: 'jpeg', quality: 0.5 });
+        
+        // 2. Tomar "foto" de alta calidad SIN marca de agua (Para Make.com)
+        const cleanURL = canvas.toDataURL({ format: 'jpeg', quality: 0.9 });
+        
+        // 3. Volver a mostrar la marca de agua y tomar foto de baja calidad (Para visualización del cliente)
+        if (watermarkObject) watermarkObject.set('opacity', 0.55);
+        canvas.renderAll();
+        const previewURL = canvas.toDataURL({ format: 'jpeg', quality: 0.3 });
 
-        shoppingCart.push({ id: Date.now(), preview: previewURL });
+        // 4. Guardar ambas versiones en el carrito
+        shoppingCart.push({ 
+            id: Date.now(), 
+            preview: previewURL,    // Visible en la web
+            cleanImage: cleanURL    // Oculta para enviar por correo
+        });
+        
         updateCartUI();
         
         editorView.style.display = 'none';
@@ -312,7 +328,7 @@ if (applyCouponBtn) {
 }
 
 // =========================================================
-// --- PROCESO DE COMPRA ---
+// --- 9. PROCESO DE COMPRA (CONEXIÓN A MAKE.COM) ---
 // =========================================================
 const checkoutBtn = document.getElementById('checkoutBtn');
 
@@ -391,8 +407,28 @@ if (checkoutBtn) {
         checkoutBtn.innerHTML = "Preparando envío seguro... ⏳";
         checkoutBtn.style.backgroundColor = "#009ee3"; 
 
-        setTimeout(() => {
+        // --- MAGIA: EMPAQUETAMOS LOS DATOS Y LAS IMÁGENES LIMPIAS ---
+        const orderData = {
+            email: emailInput,
+            cupon: cuponInput,
+            cantidad: cantidad,
+            campanas: shoppingCart.map(item => item.cleanImage) // Array con las imágenes sin marca de agua
+        };
+
+        // --- ENVIAMOS EL PAQUETE AL ROBOT DE MAKE ---
+        fetch("https://hook.us2.make.com/h4tv65qzhjgckc1f25cf01z2sfavb6cd", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(orderData)
+        })
+        .then(response => {
+            // Cuando Make avisa que recibió el paquete, mandamos al cliente a pagar
             window.location.href = linkDePago;
-        }, 1500);
+        })
+        .catch(error => {
+            console.error("Error conectando con Make:", error);
+            // Si falla el internet, de todos modos lo mandamos a pagar
+            window.location.href = linkDePago;
+        });
     });
 }
