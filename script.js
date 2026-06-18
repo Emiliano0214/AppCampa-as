@@ -418,7 +418,6 @@ if (checkoutBtn) {
         // --- ENVIAMOS EL PAQUETE AL ROBOT DE MAKE ---
         fetch("https://hook.us2.make.com/h4tv65qzhjgckc1f25cf01z2sfavb6cd", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(orderData)
         })
         .then(response => {
