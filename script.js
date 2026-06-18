@@ -431,18 +431,38 @@ if (checkoutBtn) {
             body: JSON.stringify(orderData)
         })
         .then(response => {
+            if (!response.ok) {
+                throw new Error("Error en la respuesta de Make");
+            }
+            return response.json(); // Convertimos la respuesta de Make a JSON
+        })
+        .then(data => {
+            // Si Make nos devuelve el arreglo de campañas, las descargamos una por una
+            if (data && data.campanas && Array.isArray(data.campanas)) {
+                data.campanas.forEach((base64Image, index) => {
+                    const downloadLink = document.createElement("a");
+                    downloadLink.href = base64Image;
+                    downloadLink.download = `Campaña_Personalizada_${index + 1}.jpeg`;
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+                });
+            }
+
+            // Manejo del botón y redirección según el cupón
             if (esPruebaMake) {
-                checkoutBtn.innerHTML = "¡Prueba enviada con éxito! ✅";
+                checkoutBtn.innerHTML = "¡Campañas descargadas! ✅";
                 checkoutBtn.style.backgroundColor = "#28a745";
-                alert("🚀 ¡Datos enviados a Make! Revisa tu flujo para ver la simulación.");
+                alert("🚀 ¡Simulación exitosa! Tus archivos limpios se han descargado directamente.");
             } else {
+                // Si no es prueba, procesa la descarga e inmediatamente redirige al pago
                 window.location.href = linkDePago;
             }
         })
         .catch(error => {
-            console.error("Error conectando con Make:", error);
+            console.error("Error conectando con Make o descargando:", error);
             if (esPruebaMake) {
-                alert("❌ Hubo un problema al conectar con Make durante la prueba.");
+                alert("❌ Hubo un problema al procesar la descarga desde Make.");
             } else {
                 window.location.href = linkDePago;
             }
